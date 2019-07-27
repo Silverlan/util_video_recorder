@@ -62,7 +62,7 @@ private:
 	av::FormatContext m_formatContext = {};
 	av::Stream m_outputStream;
 	std::unique_ptr<av::VideoEncoderContext> m_encoder;
-	std::chrono::high_resolution_clock::duration m_encodeDuration = std::chrono::seconds{0};
+	std::chrono::steady_clock::duration m_encodeDuration = std::chrono::seconds{0};
 	FrameIndex m_curFrameIndex = 0;
 	VideoRecorder::ThreadIndex m_curThreadIndex = 0;
 	double m_prevTimeStamp = 0.0;

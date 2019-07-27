@@ -63,7 +63,7 @@ public:
 	~VideoEncoderThread();
 	bool IsBusy() const;
 	void EncodeFrame(FFMpegEncoder::FrameIndex frameIndex,const void *bufferData,size_t bufferSize);
-	std::chrono::high_resolution_clock::duration GetWorkDuration() const;
+	std::chrono::steady_clock::duration GetWorkDuration() const;
 	void Start();
 	void Stop();
 private:
@@ -80,7 +80,7 @@ private:
 	av::VideoFrame m_srcFrame;
 	av::VideoFrame m_dstFrame;
 	av::VideoEncoderContext &m_encoder;
-	std::chrono::high_resolution_clock::time_point m_startTime;
+	std::chrono::steady_clock::time_point m_startTime;
 
 	VideoPacketWriterThread &m_writerThread;
 };

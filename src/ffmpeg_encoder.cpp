@@ -100,7 +100,7 @@ void FFMpegEncoder::Initialize(const std::string &outFileName,const VideoRecorde
 	{
 		case VideoRecorder::Codec::MotionJPEG:
 			// Deprecated in favor of AV_PIX_FMT_YUV420P according to ffmpeg log, but
-			// AV_PIX_FMT_YUV420P does not work with MotionJPEG?
+			// AV_PIX_FMT_YUV420P does not work with MotionJPEG
 			dstPixelFormat = AVPixelFormat::AV_PIX_FMT_YUVJ420P;
 
 			pRawEncoder->thread_count = 1;
@@ -152,7 +152,7 @@ void FFMpegEncoder::Initialize(const std::string &outFileName,const VideoRecorde
 
 VideoRecorder::ThreadIndex FFMpegEncoder::StartFrame()
 {
-	auto longestDuration = std::chrono::high_resolution_clock::duration{std::chrono::nanoseconds{0}};
+	auto longestDuration = std::chrono::steady_clock::duration{std::chrono::nanoseconds{0}};
 	auto bestCandidateIndex = std::numeric_limits<VideoRecorder::ThreadIndex>::max();
 	// Find thread that is either not busy, or has been
 	// busy the longest (in which case its likely to finish first)
@@ -222,7 +222,7 @@ int32_t FFMpegEncoder::WriteFrame(const VideoRecorder::Color *buffer,size_t size
 		return 0; // Skip this frame
 	auto numFrames = 0u;
 	// Frame may have to be encoded multiple times
-	auto tCur = std::chrono::high_resolution_clock::now();
+	auto tCur = std::chrono::steady_clock::now();
 	for(auto i=decltype(deltaTime){0u};i<deltaTime;++i)
 	{
 		/* encode the image */
@@ -230,7 +230,7 @@ int32_t FFMpegEncoder::WriteFrame(const VideoRecorder::Color *buffer,size_t size
 		++m_curFrameIndex;
 		++numFrames;
 	}
-	auto tDelta = std::chrono::high_resolution_clock::now() -tCur;
+	auto tDelta = std::chrono::steady_clock::now() -tCur;
 	m_encodeDuration += tDelta;
 	return numFrames;
 }

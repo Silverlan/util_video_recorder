@@ -177,7 +177,7 @@ void VideoEncoderThread::EncodeFrame(FFMpegEncoder::FrameIndex frameIndex,const 
 		;
 	if(IsValid() == false)
 		return;
-	m_startTime = std::chrono::high_resolution_clock::now();
+	m_startTime = std::chrono::steady_clock::now();
 	m_frameIndex = frameIndex;
 	InitFrameFromBufferData(m_srcFrame,bufferData,bufferSize);
 
@@ -187,7 +187,7 @@ void VideoEncoderThread::EncodeFrame(FFMpegEncoder::FrameIndex frameIndex,const 
 
 	m_isEncodingFrame = true;
 }
-std::chrono::high_resolution_clock::duration VideoEncoderThread::GetWorkDuration() const {return std::chrono::high_resolution_clock::now() -m_startTime;}
+std::chrono::steady_clock::duration VideoEncoderThread::GetWorkDuration() const {return std::chrono::steady_clock::now() -m_startTime;}
 void VideoEncoderThread::Start()
 {
 	m_running = true;
