@@ -218,17 +218,16 @@ int32_t FFMpegEncoder::WriteFrame(const VideoRecorder::Color *buffer,size_t size
 	m_prevTimeStamp = timeStamp -(dtTimeStamp -dtTimeUnits) /frameRate;
 
 	uint32_t deltaTime = dtTimeUnits;
-	if(deltaTime == 0)
+	if(deltaTime == 0 && m_curFrameIndex > 0)
 		return 0; // Skip this frame
-	auto numFrames = 0u;
+	auto numFrames = std::max(deltaTime,1u);
 	// Frame may have to be encoded multiple times
 	auto tCur = std::chrono::steady_clock::now();
-	for(auto i=decltype(deltaTime){0u};i<deltaTime;++i)
+	for(auto i=decltype(numFrames){0u};i<numFrames;++i)
 	{
 		/* encode the image */
 		EncodeFrame(buffer,size);
 		++m_curFrameIndex;
-		++numFrames;
 	}
 	auto tDelta = std::chrono::steady_clock::now() -tCur;
 	m_encodeDuration += tDelta;
