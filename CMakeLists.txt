@@ -53,7 +53,7 @@ set(PROJ_NAME util_video_recorder)
 project(${PROJ_NAME} CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CONFIG_VIDEO_RECORDER_SHARED_LIBRARY 0 CACHE BOOL "Build as shared library?")
+option(CONFIG_VIDEO_RECORDER_SHARED_LIBRARY "Build as shared library?" OFF)
 # set(PRECOMPILED_HEADER "stdafx")
 
 add_include_dir(ffmpeg)
