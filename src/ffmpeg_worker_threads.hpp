@@ -62,17 +62,18 @@ public:
 	);
 	~VideoEncoderThread();
 	bool IsBusy() const;
-	void EncodeFrame(FFMpegEncoder::FrameIndex frameIndex,const void *bufferData,size_t bufferSize);
+	void EncodeFrame(FFMpegEncoder::FrameIndex frameIndex,const util::ImageBuffer &imgBuf);
 	std::chrono::steady_clock::duration GetWorkDuration() const;
 	void Start();
 	void Stop();
 private:
-	static void InitFrameFromBufferData(av::VideoFrame &frame,const void *buffer,size_t size);
+	static void InitFrameFromBufferData(av::VideoFrame &frame,const util::ImageBuffer &imgBuf);
 	void Run();
 	void EncodeCurrentFrame();
 
 	void *m_dataBuffer = nullptr;
 	FFMpegEncoder::FrameIndex m_frameIndex = 0;
+	std::shared_ptr<const util::ImageBuffer> m_currentFrameImageBuffer = nullptr;
 	std::atomic<bool> m_isEncodingFrame = false;
 	std::thread m_thread;
 	std::atomic<bool> m_running = false;

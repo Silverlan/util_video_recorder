@@ -122,11 +122,11 @@ VideoRecorder::ThreadIndex VideoRecorder::StartFrame()
 		return 0;
 	return m_ffmpegEncoder->StartFrame();
 }
-int32_t VideoRecorder::WriteFrame(const Color *buffer,size_t size,double frameTime)
+int32_t VideoRecorder::WriteFrame(const util::ImageBuffer &imgBuf,double frameTime)
 {
 	if(IsRecording() == false)
 		return -1;
-	return m_ffmpegEncoder->WriteFrame(buffer,size,frameTime);
+	return m_ffmpegEncoder->WriteFrame(imgBuf,frameTime);
 }
 uint32_t VideoRecorder::GetWidth() const {return m_ffmpegEncoder->GetWidth();}
 uint32_t VideoRecorder::GetHeight() const {return m_ffmpegEncoder->GetHeight();}

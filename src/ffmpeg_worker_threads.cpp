@@ -146,7 +146,7 @@ VideoEncoderThread::~VideoEncoderThread()
 {
 	Stop();
 }
-void VideoEncoderThread::InitFrameFromBufferData(av::VideoFrame &frame,const void *buffer,size_t size)
+void VideoEncoderThread::InitFrameFromBufferData(av::VideoFrame &frame,const util::ImageBuffer &imgBuf)
 {
 	/*
 	av::VideoFrame frame {
@@ -158,20 +158,21 @@ void VideoEncoderThread::InitFrameFromBufferData(av::VideoFrame &frame,const voi
 
 	std::array<uint8_t*,4> buf;
 	std::array<int,4> lineSize;
-	av_image_fill_arrays(buf.data(),lineSize.data(),reinterpret_cast<const uint8_t*>(buffer),frame.pixelFormat(),frame.width(),frame.height(),FFMpegEncoder::FRAME_ALIGNMENT);
+	auto *bufferData = reinterpret_cast<const uint8_t*>(imgBuf.GetData());
+	av_image_fill_arrays(buf.data(),lineSize.data(),bufferData,frame.pixelFormat(),frame.width(),frame.height(),FFMpegEncoder::FRAME_ALIGNMENT);
 	if(lineSize.at(0) != frame.width() *sizeof(VideoRecorder::Color))
 		throw VideoRecorder::LogicError{"Frame line size does not match input data line size!"};
 
 	// No need to copy data
 	//memcpy(frame.raw()->data[0],colors.data(),colors.size() *sizeof(colors.front()));
-	frame.raw()->data[0] = static_cast<uint8_t*>(const_cast<void*>(buffer));
+	frame.raw()->data[0] = static_cast<uint8_t*>(const_cast<uint8_t*>(bufferData));
 	frame.setComplete(true);
 
 	frame.raw()->pts = 0;
 	frame.raw()->pkt_dts = 0;
 }
 bool VideoEncoderThread::IsBusy() const {return m_isEncodingFrame;}
-void VideoEncoderThread::EncodeFrame(FFMpegEncoder::FrameIndex frameIndex,const void *bufferData,size_t bufferSize)
+void VideoEncoderThread::EncodeFrame(FFMpegEncoder::FrameIndex frameIndex,const util::ImageBuffer &imgBuf)
 {
 	while(IsBusy() && IsValid())
 		;
@@ -179,10 +180,14 @@ void VideoEncoderThread::EncodeFrame(FFMpegEncoder::FrameIndex frameIndex,const 
 		return;
 	m_startTime = std::chrono::steady_clock::now();
 	m_frameIndex = frameIndex;
-	InitFrameFromBufferData(m_srcFrame,bufferData,bufferSize);
+	auto ptrBuf = imgBuf.shared_from_this();
+	if(ptrBuf->GetFormat() != util::ImageBuffer::Format::RGBA8)
+		ptrBuf = ptrBuf->Copy(util::ImageBuffer::Format::RGBA8);
+	m_currentFrameImageBuffer = ptrBuf;
+	InitFrameFromBufferData(m_srcFrame,imgBuf);
 
 	auto calcSize = av_image_get_buffer_size(m_srcFrame.pixelFormat(),m_srcFrame.width(),m_srcFrame.height(),FFMpegEncoder::FRAME_ALIGNMENT);
-	if(calcSize != bufferSize)
+	if(calcSize != imgBuf.GetSize())
 		throw VideoRecorder::LogicError{"Data size does not match expected size for the specified format and resolution!"};
 
 	m_isEncodingFrame = true;
@@ -228,5 +233,6 @@ void VideoEncoderThread::EncodeCurrentFrame()
 
 	m_writerThread.AddPacket(packet,m_frameIndex);
 	m_isEncodingFrame = false;
+	m_currentFrameImageBuffer = nullptr;
 }
 #pragma optimize("",on)

@@ -57,12 +57,16 @@ option(CONFIG_VIDEO_RECORDER_SHARED_LIBRARY "Build as shared library?" OFF)
 # set(PRECOMPILED_HEADER "stdafx")
 
 add_include_dir(ffmpeg)
+add_include_dir(glm)
 add_external_library(ffmpeg_avcodec)
 add_external_library(ffmpeg_avutil)
 add_external_library(ffmpeg_avformat)
 add_external_library(ffmpeg_swscale)
 
 link_external_library(avcpp)
+link_external_library(sharedutils)
+link_external_library(mathutil)
+link_external_library(vfilesystem)
 
 set(DEFINITIONS)
 

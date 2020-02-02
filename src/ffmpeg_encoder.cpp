@@ -176,9 +176,9 @@ VideoRecorder::ThreadIndex FFMpegEncoder::StartFrame()
 	return m_curThreadIndex;
 }
 
-void FFMpegEncoder::EncodeFrame(const VideoRecorder::Color *buffer,size_t size)
+void FFMpegEncoder::EncodeFrame(const util::ImageBuffer &imgBuf)
 {
-	m_encoderThreads.at(m_curThreadIndex)->EncodeFrame(m_curFrameIndex,buffer,size);
+	m_encoderThreads.at(m_curThreadIndex)->EncodeFrame(m_curFrameIndex,imgBuf);
 }
 
 void FFMpegEncoder::EndRecording()
@@ -206,7 +206,7 @@ void FFMpegEncoder::EndRecording()
 	CheckError(errCode);
 }
 
-int32_t FFMpegEncoder::WriteFrame(const VideoRecorder::Color *buffer,size_t size,double frameTime)
+int32_t FFMpegEncoder::WriteFrame(const util::ImageBuffer &imgBuf,double frameTime)
 {
 	auto timeStamp = frameTime; // Timestamp to beginning of recording
 	auto prevTimeStamp = m_prevTimeStamp; // TODO
@@ -226,7 +226,7 @@ int32_t FFMpegEncoder::WriteFrame(const VideoRecorder::Color *buffer,size_t size
 	for(auto i=decltype(numFrames){0u};i<numFrames;++i)
 	{
 		/* encode the image */
-		EncodeFrame(buffer,size);
+		EncodeFrame(imgBuf);
 		++m_curFrameIndex;
 	}
 	auto tDelta = std::chrono::steady_clock::now() -tCur;
