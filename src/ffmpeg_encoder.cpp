@@ -176,7 +176,7 @@ VideoRecorder::ThreadIndex FFMpegEncoder::StartFrame()
 	return m_curThreadIndex;
 }
 
-void FFMpegEncoder::EncodeFrame(const util::ImageBuffer &imgBuf)
+void FFMpegEncoder::EncodeFrame(const uimg::ImageBuffer &imgBuf)
 {
 	m_encoderThreads.at(m_curThreadIndex)->EncodeFrame(m_curFrameIndex,imgBuf);
 }
@@ -206,7 +206,7 @@ void FFMpegEncoder::EndRecording()
 	CheckError(errCode);
 }
 
-int32_t FFMpegEncoder::WriteFrame(const util::ImageBuffer &imgBuf,double frameTime)
+int32_t FFMpegEncoder::WriteFrame(const uimg::ImageBuffer &imgBuf,double frameTime)
 {
 	auto timeStamp = frameTime; // Timestamp to beginning of recording
 	auto prevTimeStamp = m_prevTimeStamp; // TODO

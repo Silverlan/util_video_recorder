@@ -47,7 +47,7 @@ public:
 	);
 
 	VideoRecorder::ThreadIndex StartFrame();
-	int32_t WriteFrame(const util::ImageBuffer &imgBuf,double frameTime);
+	int32_t WriteFrame(const uimg::ImageBuffer &imgBuf,double frameTime);
 	void EndRecording();
 	uint32_t GetWidth() const;
 	uint32_t GetHeight() const;
@@ -56,7 +56,7 @@ private:
 	FFMpegEncoder()=default;
 	void CheckError(std::error_code errCode);
 	void Initialize(const std::string &outFileName,const VideoRecorder::EncodingSettings &encodingSettings,const std::shared_ptr<VideoRecorder::ICustomFile> &fileInterface=nullptr);
-	void EncodeFrame(const util::ImageBuffer &imgBuf);
+	void EncodeFrame(const uimg::ImageBuffer &imgBuf);
 
 	std::unique_ptr<AVFileIO> m_fileIo = nullptr;
 	av::FormatContext m_formatContext = {};

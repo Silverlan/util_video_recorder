@@ -146,7 +146,7 @@ VideoEncoderThread::~VideoEncoderThread()
 {
 	Stop();
 }
-void VideoEncoderThread::InitFrameFromBufferData(av::VideoFrame &frame,const util::ImageBuffer &imgBuf)
+void VideoEncoderThread::InitFrameFromBufferData(av::VideoFrame &frame,const uimg::ImageBuffer &imgBuf)
 {
 	/*
 	av::VideoFrame frame {
@@ -172,7 +172,7 @@ void VideoEncoderThread::InitFrameFromBufferData(av::VideoFrame &frame,const uti
 	frame.raw()->pkt_dts = 0;
 }
 bool VideoEncoderThread::IsBusy() const {return m_isEncodingFrame;}
-void VideoEncoderThread::EncodeFrame(FFMpegEncoder::FrameIndex frameIndex,const util::ImageBuffer &imgBuf)
+void VideoEncoderThread::EncodeFrame(FFMpegEncoder::FrameIndex frameIndex,const uimg::ImageBuffer &imgBuf)
 {
 	while(IsBusy() && IsValid())
 		;
@@ -181,8 +181,8 @@ void VideoEncoderThread::EncodeFrame(FFMpegEncoder::FrameIndex frameIndex,const 
 	m_startTime = std::chrono::steady_clock::now();
 	m_frameIndex = frameIndex;
 	auto ptrBuf = imgBuf.shared_from_this();
-	if(ptrBuf->GetFormat() != util::ImageBuffer::Format::RGBA8)
-		ptrBuf = ptrBuf->Copy(util::ImageBuffer::Format::RGBA8);
+	if(ptrBuf->GetFormat() != uimg::ImageBuffer::Format::RGBA8)
+		ptrBuf = ptrBuf->Copy(uimg::ImageBuffer::Format::RGBA8);
 	m_currentFrameImageBuffer = ptrBuf;
 	InitFrameFromBufferData(m_srcFrame,imgBuf);
 

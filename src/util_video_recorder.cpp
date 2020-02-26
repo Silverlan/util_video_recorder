@@ -122,7 +122,7 @@ VideoRecorder::ThreadIndex VideoRecorder::StartFrame()
 		return 0;
 	return m_ffmpegEncoder->StartFrame();
 }
-int32_t VideoRecorder::WriteFrame(const util::ImageBuffer &imgBuf,double frameTime)
+int32_t VideoRecorder::WriteFrame(const uimg::ImageBuffer &imgBuf,double frameTime)
 {
 	if(IsRecording() == false)
 		return -1;

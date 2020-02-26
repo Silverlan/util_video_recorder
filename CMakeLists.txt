@@ -67,6 +67,7 @@ link_external_library(avcpp)
 link_external_library(sharedutils)
 link_external_library(mathutil)
 link_external_library(vfilesystem)
+link_external_library(util_image)
 
 set(DEFINITIONS)
 

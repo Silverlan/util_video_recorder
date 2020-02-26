@@ -13,7 +13,7 @@
 #include <optional>
 #include <functional>
 #include <chrono>
-#include <sharedutils/util_image_buffer.hpp>
+#include <util_image_buffer.hpp>
 
 // Note: H264 uses the GPL license
 #define VIDEO_RECORDER_ENABLE_H264_CODEC
@@ -114,7 +114,7 @@ public:
 	void EndRecording();
 	bool IsRecording() const;
 	ThreadIndex StartFrame();
-	int32_t WriteFrame(const util::ImageBuffer &imgBuf,double frameTime);
+	int32_t WriteFrame(const uimg::ImageBuffer &imgBuf,double frameTime);
 
 	uint32_t GetWidth() const;
 	uint32_t GetHeight() const;
