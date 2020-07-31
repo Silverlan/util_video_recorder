@@ -5,12 +5,14 @@
 #include "util_video_recorder.hpp"
 #include "ffmpeg_encoder.hpp"
 
+using namespace media;
+
 std::unique_ptr<VideoRecorder> VideoRecorder::Create(std::unique_ptr<ICustomFile> fileInterface)
 {
 	return std::unique_ptr<VideoRecorder>{new VideoRecorder{std::move(fileInterface)}};
 }
 
-static std::array<std::string,static_cast<std::underlying_type_t<VideoRecorder::Format>>(VideoRecorder::Format::Count)> s_formatToString = {
+static std::array<std::string,static_cast<std::underlying_type_t<Format>>(Format::Count)> s_formatToString = {
 	"rawvideo",
 	"webm",
 	"matroska",
@@ -31,9 +33,9 @@ static std::array<std::string,static_cast<std::underlying_type_t<VideoRecorder::
 	"3gp",
 	"3g2"
 };
-std::string VideoRecorder::FormatToName(Format format) {return s_formatToString.at(static_cast<std::underlying_type_t<decltype(format)>>(format));}
+std::string media::format_to_name(Format format) {return s_formatToString.at(static_cast<std::underlying_type_t<decltype(format)>>(format));}
 
-static std::array<std::string,static_cast<std::underlying_type_t<VideoRecorder::Codec>>(VideoRecorder::Codec::Count)> s_codecToString = {
+static std::array<std::string,static_cast<std::underlying_type_t<Codec>>(Codec::Count)> s_codecToString = {
 	"rawvideo",
 	"mpeg4",
 #ifdef VIDEO_RECORDER_ENABLE_H264_CODEC
@@ -48,12 +50,12 @@ static std::array<std::string,static_cast<std::underlying_type_t<VideoRecorder::
 	"mpeg1video",
 	"hevc"
 };
-std::string VideoRecorder::CodecToName(Codec codec) {return s_codecToString.at(static_cast<std::underlying_type_t<decltype(codec)>>(codec));}
-VideoRecorder::BitRate VideoRecorder::CalcBitrate(uint32_t width,uint32_t height,FrameRate frameRate,double bitsPerPixel)
+std::string media::codec_to_name(Codec codec) {return s_codecToString.at(static_cast<std::underlying_type_t<decltype(codec)>>(codec));}
+BitRate media::calc_bitrate(uint32_t width,uint32_t height,FrameRate frameRate,double bitsPerPixel)
 {
 	return width *height *frameRate *bitsPerPixel;
 }
-double VideoRecorder::GetBitsPerPixel(Quality quality)
+double media::get_bits_per_pixel(Quality quality)
 {
 	const auto lowestBpp = 0.05;
 	const auto highestBpp = 0.15;
@@ -72,37 +74,37 @@ double VideoRecorder::GetBitsPerPixel(Quality quality)
 			return highestBpp;
 	}
 }
-std::vector<VideoRecorder::Format> VideoRecorder::GetAllFormats()
+std::vector<Format> media::get_all_formats()
 {
-	auto numFormats = static_cast<std::underlying_type_t<VideoRecorder::Format>>(VideoRecorder::Format::Count);
-	std::vector<VideoRecorder::Format> formats {};
+	auto numFormats = static_cast<std::underlying_type_t<Format>>(Format::Count);
+	std::vector<Format> formats {};
 	formats.reserve(numFormats);
 	for(auto i=decltype(numFormats){0};i<numFormats;++i)
-		formats.push_back(static_cast<VideoRecorder::Format>(i));
+		formats.push_back(static_cast<Format>(i));
 	return formats;
 }
-std::vector<VideoRecorder::Codec> VideoRecorder::GetAllCodecs()
+std::vector<Codec> media::get_all_codecs()
 {
-	auto numCodecs = static_cast<std::underlying_type_t<VideoRecorder::Codec>>(VideoRecorder::Codec::Count);
-	std::vector<VideoRecorder::Codec> codecs {};
+	auto numCodecs = static_cast<std::underlying_type_t<Codec>>(Codec::Count);
+	std::vector<Codec> codecs {};
 	codecs.reserve(numCodecs);
 	for(auto i=decltype(numCodecs){0};i<numCodecs;++i)
-		codecs.push_back(static_cast<VideoRecorder::Codec>(i));
+		codecs.push_back(static_cast<Codec>(i));
 	return codecs;
 }
-std::vector<VideoRecorder::Codec> VideoRecorder::GetSupportedCodecs(Format format)
+std::vector<Codec> GetSupportedCodecs(Format format)
 {
-	auto formatName = FormatToName(format);
+	auto formatName = format_to_name(format);
 	av::OutputFormat avFormat {};
 	if(avFormat.setFormat(formatName) == false)
 		return {};
 	auto numCodecs = static_cast<std::underlying_type_t<Codec>>(Codec::Count);
-	std::vector<VideoRecorder::Codec> supportedCodecs {};
+	std::vector<Codec> supportedCodecs {};
 	supportedCodecs.reserve(numCodecs);
 	for(auto i=decltype(numCodecs){0u};i<numCodecs;++i)
 	{
 		auto codec = static_cast<Codec>(i);
-		auto avCodec = av::findEncodingCodec(CodecToName(codec));
+		auto avCodec = av::findEncodingCodec(codec_to_name(codec));
 		if(avFormat.codecSupported(avCodec) == false)
 			continue;
 		supportedCodecs.push_back(codec);

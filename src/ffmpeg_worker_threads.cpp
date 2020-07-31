@@ -10,6 +10,9 @@
 #else
 	#include <thread>
 #endif
+
+using namespace media;
+
 enum class ThreadPriority : uint32_t
 {
 	Lowest = 0,
@@ -160,8 +163,8 @@ void VideoEncoderThread::InitFrameFromBufferData(av::VideoFrame &frame,const uim
 	std::array<int,4> lineSize;
 	auto *bufferData = reinterpret_cast<const uint8_t*>(imgBuf.GetData());
 	av_image_fill_arrays(buf.data(),lineSize.data(),bufferData,frame.pixelFormat(),frame.width(),frame.height(),FFMpegEncoder::FRAME_ALIGNMENT);
-	if(lineSize.at(0) != frame.width() *sizeof(VideoRecorder::Color))
-		throw VideoRecorder::LogicError{"Frame line size does not match input data line size!"};
+	if(lineSize.at(0) != frame.width() *sizeof(Color))
+		throw LogicError{"Frame line size does not match input data line size!"};
 
 	// No need to copy data
 	//memcpy(frame.raw()->data[0],colors.data(),colors.size() *sizeof(colors.front()));
@@ -188,7 +191,7 @@ void VideoEncoderThread::EncodeFrame(FFMpegEncoder::FrameIndex frameIndex,const 
 
 	auto calcSize = av_image_get_buffer_size(m_srcFrame.pixelFormat(),m_srcFrame.width(),m_srcFrame.height(),FFMpegEncoder::FRAME_ALIGNMENT);
 	if(calcSize != imgBuf.GetSize())
-		throw VideoRecorder::LogicError{"Data size does not match expected size for the specified format and resolution!"};
+		throw LogicError{"Data size does not match expected size for the specified format and resolution!"};
 
 	m_isEncodingFrame = true;
 }

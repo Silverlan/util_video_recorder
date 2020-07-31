@@ -4,37 +4,15 @@
 
 #include "ffmpeg_encoder.hpp"
 #include "ffmpeg_worker_threads.hpp"
+#include "util_ffmpeg.hpp"
 #include <avutils.h>
 
+using namespace media;
+
 #pragma optimize("",off)
-FFMpegEncoder::AVFileIO::AVFileIO(const std::shared_ptr<VideoRecorder::ICustomFile> &fileInterface)
-	: m_fileInterface{fileInterface}
-{}
-bool FFMpegEncoder::AVFileIO::open(const std::string &fileName)
-{
-	m_fileName = fileName;
-	return m_fileInterface->open(fileName);
-}
-ssize_t FFMpegEncoder::AVFileIO::write(const uint8_t *data, size_t size)
-{
-	auto res = m_fileInterface->write(data,size);
-	return res.has_value() ? *res : -1;
-}
-ssize_t FFMpegEncoder::AVFileIO::read(uint8_t *data, size_t size)
-{
-	auto res = m_fileInterface->read(data,size);
-	return res.has_value() ? *res : -1;
-}
-int64_t FFMpegEncoder::AVFileIO::seek(int64_t offset, int whence)
-{
-	auto res = m_fileInterface->seek(offset,whence);
-	return res.has_value() ? *res : -1;
-}
-int FFMpegEncoder::AVFileIO::seekable() const {return AVIO_SEEKABLE_NORMAL;}
-const char *FFMpegEncoder::AVFileIO::name() const {return m_fileName.c_str();}
 std::unique_ptr<FFMpegEncoder> FFMpegEncoder::Create(
 	const std::string &outFileName,const VideoRecorder::EncodingSettings &encodingSettings,
-	const std::shared_ptr<VideoRecorder::ICustomFile> &fileInterface
+	const std::shared_ptr<ICustomFile> &fileInterface
 )
 {
 	auto encoder = std::unique_ptr<FFMpegEncoder>{new FFMpegEncoder{}};
@@ -42,52 +20,46 @@ std::unique_ptr<FFMpegEncoder> FFMpegEncoder::Create(
 	return encoder;
 }
 
-void FFMpegEncoder::CheckError(std::error_code errCode)
-{
-	if(errCode)
-		throw VideoRecorder::RuntimeError{"AVCPP Error: " +errCode.message()};
-}
-
-void FFMpegEncoder::Initialize(const std::string &outFileName,const VideoRecorder::EncodingSettings &encodingSettings,const std::shared_ptr<VideoRecorder::ICustomFile> &fileInterface)
+void FFMpegEncoder::Initialize(const std::string &outFileName,const VideoRecorder::EncodingSettings &encodingSettings,const std::shared_ptr<ICustomFile> &fileInterface)
 {
     av::init();
 	
 	av::set_logging_level(AV_LOG_DEBUG);
 
-	auto strFormat = VideoRecorder::FormatToName(encodingSettings.format);
+	auto strFormat = format_to_name(encodingSettings.format);
 	av::OutputFormat outputFormat {};
 	if(outputFormat.setFormat(strFormat,outFileName) == false)
-		throw VideoRecorder::RuntimeError{"Output format '" +strFormat +"' could not be set!"};
+		throw RuntimeError{"Output format '" +strFormat +"' could not be set!"};
 	
 	m_formatContext.setFormat(outputFormat);
 
-	auto strCodec = VideoRecorder::CodecToName(encodingSettings.codec);
+	auto strCodec = codec_to_name(encodingSettings.codec);
 	auto avCodec = av::findEncodingCodec(strCodec);
 	if(outputFormat.codecSupported(avCodec) == false)
-		throw VideoRecorder::LogicError{"Codec '" +strCodec +"' is not supported by output format '" +strFormat +"'!"};
+		throw LogicError{"Codec '" +strCodec +"' is not supported by output format '" +strFormat +"'!"};
 
 	std::error_code errCode;
 	m_outputStream = m_formatContext.addStream(avCodec,errCode);
-	CheckError(errCode);
+	check_error(errCode);
 
 	m_encoder = std::make_unique<av::VideoEncoderContext>(m_outputStream);
 	auto &encoder = *m_encoder;
 
 	switch(encodingSettings.quality)
 	{
-		case VideoRecorder::Quality::VeryLow:
+		case Quality::VeryLow:
 			encoder.setGlobalQuality(FF_LAMBDA_MAX);
 			break;
-		case VideoRecorder::Quality::Low:
+		case Quality::Low:
 			encoder.setGlobalQuality(FF_LAMBDA_MAX *0.75);
 			break;
-		case VideoRecorder::Quality::Medium:
+		case Quality::Medium:
 			encoder.setGlobalQuality(FF_LAMBDA_MAX *0.5);
 			break;
-		case VideoRecorder::Quality::High:
+		case Quality::High:
 			encoder.setGlobalQuality(FF_LAMBDA_MAX *0.25);
 			break;
-		case VideoRecorder::Quality::VeryHigh:
+		case Quality::VeryHigh:
 			encoder.setGlobalQuality(0);
 			break;
 	}
@@ -98,7 +70,7 @@ void FFMpegEncoder::Initialize(const std::string &outFileName,const VideoRecorde
     av::PixelFormat dstPixelFormat {AVPixelFormat::AV_PIX_FMT_YUV420P};
 	switch(encodingSettings.codec)
 	{
-		case VideoRecorder::Codec::MotionJPEG:
+		case Codec::MotionJPEG:
 			// Deprecated in favor of AV_PIX_FMT_YUV420P according to ffmpeg log, but
 			// AV_PIX_FMT_YUV420P does not work with MotionJPEG
 			dstPixelFormat = AVPixelFormat::AV_PIX_FMT_YUVJ420P;
@@ -116,7 +88,7 @@ void FFMpegEncoder::Initialize(const std::string &outFileName,const VideoRecorde
 	if(encodingSettings.bitRate.has_value())
 		bitRate = *encodingSettings.bitRate;
 	else
-		bitRate = VideoRecorder::CalcBitrate(encodingSettings.width,encodingSettings.height,encodingSettings.frameRate,VideoRecorder::GetBitsPerPixel(encodingSettings.quality));
+		bitRate = calc_bitrate(encodingSettings.width,encodingSettings.height,encodingSettings.frameRate,get_bits_per_pixel(encodingSettings.quality));
     encoder.setBitRate(bitRate);
     m_outputStream.setFrameRate({static_cast<int32_t>(encodingSettings.frameRate),1});
     m_outputStream.setTimeBase(encoder.timeBase());
@@ -129,15 +101,15 @@ void FFMpegEncoder::Initialize(const std::string &outFileName,const VideoRecorde
 		if(m_fileIo->open(outFileName)	== true)
 			m_formatContext.openOutput(m_fileIo.get(),errCode);
 		else
-			throw VideoRecorder::RuntimeError{"Unable to open file '" +outFileName +"'!"};
+			throw RuntimeError{"Unable to open file '" +outFileName +"'!"};
 	}
-	CheckError(errCode);
+	check_error(errCode);
     
     encoder.open(avCodec,errCode);
-	CheckError(errCode);
+	check_error(errCode);
 
 	m_formatContext.writeHeader(errCode);
-	CheckError(errCode);
+	check_error(errCode);
 	m_formatContext.flush();
 
 	m_packetWriterThread = std::make_unique<VideoPacketWriterThread>(m_formatContext);
@@ -171,7 +143,7 @@ VideoRecorder::ThreadIndex FFMpegEncoder::StartFrame()
 		bestCandidateIndex = i;
 	}
 	if(bestCandidateIndex == std::numeric_limits<VideoRecorder::ThreadIndex>::max())
-		throw VideoRecorder::LogicError{"No threads have been allocated for encoding!"};
+		throw LogicError{"No threads have been allocated for encoding!"};
 	m_curThreadIndex = bestCandidateIndex;
 	return m_curThreadIndex;
 }
@@ -189,21 +161,21 @@ void FFMpegEncoder::EndRecording()
 	std::error_code errCode {};
 	if(m_packetWriterThread->GetErrorCode().has_value())
 		errCode = *m_packetWriterThread->GetErrorCode();
-	CheckError(errCode);
+	check_error(errCode);
 	m_packetWriterThread = nullptr;
 	
 	for(auto &pThread : m_encoderThreads)
 	{
 		if(pThread->GetErrorCode().has_value())
 			errCode = *pThread->GetErrorCode();
-		CheckError(errCode);
+		check_error(errCode);
 	}
 	m_encoderThreads.clear();
 
     m_formatContext.writePacket(errCode);
-	CheckError(errCode);
+	check_error(errCode);
     m_formatContext.writeTrailer(errCode);
-	CheckError(errCode);
+	check_error(errCode);
 }
 
 int32_t FFMpegEncoder::WriteFrame(const uimg::ImageBuffer &imgBuf,double frameTime)
