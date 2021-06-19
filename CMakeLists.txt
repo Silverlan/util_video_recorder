@@ -52,7 +52,7 @@ set(PROJ_NAME util_video_recorder)
 
 project(${PROJ_NAME} CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 option(CONFIG_VIDEO_RECORDER_SHARED_LIBRARY "Build as shared library?" OFF)
 # set(PRECOMPILED_HEADER "stdafx")
 
